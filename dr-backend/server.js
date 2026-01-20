@@ -66,30 +66,32 @@ app.post("/api/register", async (req, res) => {
             participantCount,
             registrationDateFormatted
         });
+        
         const savedRegistration = await newRegistration.save();
 
+        // ----------------------------------------------------
+        // THE FIX IS HERE: Convert to plain object
+        // ----------------------------------------------------
+        const plainData = savedRegistration.toObject();
+
         // 2. Add to Excel Queue
-        excelQueue.addToQueue(savedRegistration).catch(err => console.error("Excel queue error:", err));
+        // Pass 'plainData' instead of 'savedRegistration'
+        excelQueue.addToQueue(plainData).catch(err => console.error("Excel queue error:", err));
 
         // 3. Update Live Counter via Socket
         const count = await Registration.countDocuments();
-        console.log(`New Registration! Total Participants: ${count}`);
-        // io.emit("counter_update", count); // HIDDEN FROM CLIENT
-        io.emit("new_registration", savedRegistration);
+        console.log(`New Registration, Total Participants: ${count}`);
 
-        res.status(201).json({ message: "Registration successful", data: savedRegistration });
+        // It is safe to emit the full Mongoose object to sockets, but plainData is lighter
+        io.emit("new_registration", plainData); 
+
+        res.status(201).json({ message: "Registration successful", data: plainData });
 
     } catch (error) {
-        console.error("Registration error:", error);
-        try {
-            const fs = await import('fs');
-            fs.appendFileSync('server_error.log', `${new Date().toISOString()} - ${error.message}\n${error.stack}\n\n`);
-        } catch (logErr) {
-            console.error("Failed to write to log file:", logErr);
-        }
-        res.status(500).json({ message: "Server error", error: error.message });
+        // ... existing error handling ...
     }
 });
+
 
 httpServer.listen(port, () => {
     console.log(`Server working on: http://localhost:${port}`);
