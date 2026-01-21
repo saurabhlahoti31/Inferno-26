@@ -9,7 +9,7 @@ export default function SuccessPage() {
     const navigate = useNavigate();
     // Safely access data, defaulting to empty object/string if accessed directly
     const registrationData = location.state?.data || {};
-    const { _id, name, college, email, phone, events, registrationDateFormatted, payment, participantCount } = registrationData;
+    const { _id, receiptId, name, college, email, phone, events, registrationDateFormatted, payment, participantCount } = registrationData;
 
 
 
@@ -45,7 +45,7 @@ export default function SuccessPage() {
                 // Receipt Info
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(10);
-                doc.text(`Receipt No: ${_id || 'N/A'}`, 140, yPos);
+                doc.text(`Receipt No: ${receiptId || _id || 'N/A'}`, 140, yPos);
                 doc.text(`Date: ${registrationDateFormatted || 'N/A'}`, 140, yPos + 6);
 
                 // Participant Details
@@ -142,7 +142,7 @@ export default function SuccessPage() {
             drawReceipt(halfHeight, true);
 
             const safeName = (name || 'receipt').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            doc.save(`${safeName}_receipt.pdf`);
+            doc.save(`${receiptId || safeName}_receipt.pdf`);
 
 
 
